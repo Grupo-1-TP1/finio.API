@@ -61,4 +61,12 @@ public class CategoryController {
 
         return ResponseEntity.ok(resources);
     }
+
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<?> deleteCategory(@PathVariable Long categoryId) {
+        var command = new com.finio.backend.finance.domain.model.commands.DeleteCategoryCommand(categoryId);
+        var deleted = categoryCommandService.handle(command);
+        if (!deleted) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok("Category deleted successfully");
+    }
 }

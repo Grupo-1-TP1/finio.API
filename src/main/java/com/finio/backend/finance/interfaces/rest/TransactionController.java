@@ -51,4 +51,12 @@ public class TransactionController {
 
         return ResponseEntity.ok(resources);
     }
+
+    @DeleteMapping("/{transactionId}")
+    public ResponseEntity<?> deleteTransaction(@PathVariable Long transactionId) {
+        var command = new com.finio.backend.finance.domain.model.commands.DeleteTransactionCommand(transactionId);
+        var deleted = transactionCommandService.handle(command);
+        if (!deleted) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok("Transaction deleted and account balance updated successfully");
+    }
 }

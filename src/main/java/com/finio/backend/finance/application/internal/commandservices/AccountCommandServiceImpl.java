@@ -2,6 +2,7 @@ package com.finio.backend.finance.application.internal.commandservices;
 
 import com.finio.backend.finance.domain.model.aggregates.Account;
 import com.finio.backend.finance.domain.model.commands.CreateAccountCommand;
+import com.finio.backend.finance.domain.model.commands.DeleteAccountCommand;
 import com.finio.backend.finance.domain.services.AccountCommandService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.AccountRepository;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,20 @@ public class AccountCommandServiceImpl implements AccountCommandService {
             return Optional.of(accountRepository.save(account));
         } catch (Exception e) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean handle(DeleteAccountCommand command) {
+        if (!accountRepository.existsById(command.accountId())) {
+            return false;
+        }
+        try {
+            accountRepository.deleteById(command.accountId());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

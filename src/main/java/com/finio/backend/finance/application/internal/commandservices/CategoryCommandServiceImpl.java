@@ -2,6 +2,7 @@ package com.finio.backend.finance.application.internal.commandservices;
 
 import com.finio.backend.finance.domain.model.aggregates.Category;
 import com.finio.backend.finance.domain.model.commands.CreateCategoryCommand;
+import com.finio.backend.finance.domain.model.commands.DeleteCategoryCommand;
 import com.finio.backend.finance.domain.services.CategoryCommandService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.CategoryRepository;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,20 @@ public class CategoryCommandServiceImpl implements CategoryCommandService {
             return Optional.of(categoryRepository.save(category));
         } catch (Exception e) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean handle(DeleteCategoryCommand command) {
+        if (!categoryRepository.existsById(command.categoryId())) {
+            return false;
+        }
+        try {
+            categoryRepository.deleteById(command.categoryId());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

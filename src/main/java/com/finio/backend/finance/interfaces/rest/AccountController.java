@@ -61,4 +61,12 @@ public class AccountController {
 
         return ResponseEntity.ok(resources);
     }
+
+    @DeleteMapping("/{accountId}")
+    public ResponseEntity<?> deleteAccount(@PathVariable Long accountId) {
+        var command = new com.finio.backend.finance.domain.model.commands.DeleteAccountCommand(accountId);
+        var deleted = accountCommandService.handle(command);
+        if (!deleted) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok("Account deleted successfully");
+    }
 }

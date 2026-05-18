@@ -5,6 +5,7 @@ import com.finio.backend.finance.domain.model.aggregates.Category;
 import com.finio.backend.finance.domain.model.aggregates.Transaction;
 import com.finio.backend.finance.domain.model.aggregates.TransactionType;
 import com.finio.backend.finance.domain.model.commands.CreateTransactionCommand;
+import com.finio.backend.finance.domain.model.commands.DeleteTransactionCommand;
 import com.finio.backend.finance.domain.services.TransactionCommandService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.AccountRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.CategoryRepository;
@@ -54,6 +55,33 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             return Optional.of(transactionRepository.save(transaction));
         } catch (Exception e) {
             return Optional.empty();
+        }
+    }
+
+    @Override
+    @Transactional
+    public boolean handle(DeleteTransactionCommand command) {
+        var transactionOptional = transactionRepository.findById(command.transactionId());
+        if (transactionOptional.isEmpty()) {
+            return false;
+        }
+
+        try {
+            // Regla de negocio: Al eliminar una transacción, revertimos el saldo de la cuenta antes de borrarla
+            var transaction = transactionOptional.get();
+            var account = transaction.getAccount();
+            if (transaction.getType() == com.finio.backend.finance.domain.model.aggregates.TransactionType.EXPENSE) {
+                account.setBalance(account.getBalance().add(transaction.getAmount()));
+            } else {
+                account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+            }
+            accountRepository.save(account);
+
+            transactionRepository.deleteById(command.transactionId());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }
