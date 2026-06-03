@@ -43,7 +43,7 @@ public class IamContextFacade {
      */
     public Long createUser(String username, String password) {
         var signUpCommand = new SignUpCommand(username, password, List.of(Role.getDefaultRole()));
-        var result = userCommandService.handle(signUpCommand);
+        var result = userCommandService.handle(signUpCommand, username);
         if (result.isEmpty())
             return 0L;
         return result.get().getId();
@@ -61,7 +61,7 @@ public class IamContextFacade {
     public Long createUser(String username, String password, List<String> roleNames) {
         var roles = roleNames != null ? roleNames.stream().map(Role::toRoleFromName).toList() : new ArrayList<Role>();
         var signUpCommand = new SignUpCommand(username, password, roles);
-        var result = userCommandService.handle(signUpCommand);
+        var result = userCommandService.handle(signUpCommand, username);
         if (result.isEmpty())
             return 0L;
         return result.get().getId();
@@ -92,7 +92,7 @@ public class IamContextFacade {
         var result = userQueryService.handle(getUserByIdQuery);
         if (result.isEmpty())
             return Strings.EMPTY;
-        return result.get().getUsername();
+        return result.get().getEmail();
     }
 
     /**
