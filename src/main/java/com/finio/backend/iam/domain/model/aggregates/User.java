@@ -24,11 +24,15 @@ import java.util.Set;
 @Entity
 public class User extends AuditableAbstractAggregateRoot<User> {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @NotBlank(message = "Username is required")
     @Email(message = "Username must be an email")
     @Size(max = 50, message = "Username must be less than 50 characters")
     @Column(unique = true)
-    private String username;
+    private String email;
 
     @NotBlank(message = "Password is required")
     @Size(max = 120, message = "Password must be less than 120 characters")
@@ -42,15 +46,15 @@ public class User extends AuditableAbstractAggregateRoot<User> {
         this.roles = new HashSet<>();
     }
 
-    public User(String username, String password) {
-        this.username = username;
+    public User(String email, String password) {
+        this.email = email;
         this.password = password;
         this.roles = new HashSet<>();
 
     }
 
-    public User(String username, String password, List<Role> roles) {
-        this(username, password);
+    public User(String email, String password, List<Role> roles) {
+        this(email, password);
         addRoles(roles);
     }
 

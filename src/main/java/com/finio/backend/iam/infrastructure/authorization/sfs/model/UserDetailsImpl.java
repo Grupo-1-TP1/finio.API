@@ -52,7 +52,7 @@ public class UserDetailsImpl implements UserDetails {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
         return new UserDetailsImpl(
-                user.getUsername(),
+                user.getEmail(),
                 user.getPassword(),
                 authorities);
     }

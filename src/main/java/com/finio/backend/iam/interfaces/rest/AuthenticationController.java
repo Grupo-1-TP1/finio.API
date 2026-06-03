@@ -66,7 +66,7 @@ public class AuthenticationController {
     @PostMapping("/sign-up")
     public ResponseEntity<UserResource> signUp(@RequestBody SignUpResource signUpResource) {
         var signUpCommand = SignUpCommandFromResourceAssembler.toCommandFromResource(signUpResource);
-        var user = userCommandService.handle(signUpCommand);
+        var user = userCommandService.handle(signUpCommand, signUpResource.name());
         if (user.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
