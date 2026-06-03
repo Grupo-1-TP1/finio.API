@@ -26,9 +26,10 @@ public class ChatbotController {
     @PostMapping("/send")
     public ResponseEntity<ChatMessageResource> sendMessage(
             @RequestParam Long userId,
+            @RequestParam String sessionId,
             @RequestBody String message) {
 
-        var command = new SendMessageCommand(userId, message);
+        var command = new SendMessageCommand(userId, sessionId, message);
         var aiMessage = chatCommandService.handle(command);
 
         var resource = ChatMessageResourceFromEntityAssembler.toResourceFromEntity(aiMessage);

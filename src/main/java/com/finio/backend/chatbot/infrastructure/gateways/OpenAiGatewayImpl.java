@@ -8,6 +8,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import java.math.BigDecimal;
 import java.util.*;
 
 @Component
@@ -20,7 +22,8 @@ public class OpenAiGatewayImpl implements AiClientGateway {
 
     @SuppressWarnings("unchecked")
     @Override
-    public String generateResponse(List<ChatMessage> conversationHistory) {
+    public String generateResponse(List<ChatMessage> conversationHistory, BigDecimal totalBalance,
+                                   Map<String, BigDecimal> spendingCategory) {
         String url = "https://api.openai.com/v1/chat/completions";
 
         HttpHeaders headers = new HttpHeaders();
@@ -39,6 +42,8 @@ public class OpenAiGatewayImpl implements AiClientGateway {
         3. Utiliza viñetas o listas cuando des consejos para facilitar la lectura.
         4. Haz referencia a las funcionalidades de la app (como el registro de Gastos e Ingresos, control de Cuentas, asignación de Presupuestos manual por Categoría de gastos, creación de Metas de ahorro, Gastos frecuentes, asignación de Presupuestos con Machine Learning) cuando sea oportuno.
         5. Si te preguntan cosas fuera del ámbito de las finanzas, la economía o el ahorro, redirige cortésmente la conversación hacia la gestión del dinero.
+        6. ¡REVISA EL HISTORIAL DE LA CONVERSACIÓN! Si el usuario te está respondiendo a una oferta que le hiciste en el mensaje anterior (como armar un presupuesto o dar consejos), NO repitas tu saludo ni vuelvas a listar sus gastos generales. Pasa directamente a ejecutar lo que te está pidiendo.
+        7. Nunca repitas textualmente tu respuesta anterior.
         """;
 
         // System Prompt para darle contexto de negocio a la IA
@@ -46,6 +51,17 @@ public class OpenAiGatewayImpl implements AiClientGateway {
                 "role", "system",
                 "content", systemPrompt
         ));
+
+        StringBuilder financialContext = new StringBuilder();
+        financialContext.append("[DATOS DE REFERENCIA DE LA BASE DE DATOS - NO REPETIR EN CADA MENSAJE]\n");
+        financialContext.append("- Saldo total disponible en cuentas: S/. ").append(totalBalance).append("\n");
+        financialContext.append("- Gastos del mes actual por categoría:\n");
+        spendingCategory.forEach((category, amount) ->
+                financialContext.append("  * ").append(category).append(": S/. ").append(amount).append("\n")
+        );
+        financialContext.append("[FIN DE DATOS DE REFERENCIA]");
+
+        messages.add(Map.of("role", "system", "content", financialContext.toString()));
 
         // Mapeamos el historial que vino de MySQL al formato JSON de OpenAI
         for (ChatMessage msg : conversationHistory) {
@@ -55,7 +71,7 @@ public class OpenAiGatewayImpl implements AiClientGateway {
         Map<String, Object> body = Map.of(
                 "model", "gpt-4o-mini", // El modelo más costo-eficiente para estudiantes
                 "messages", messages,
-                "temperature", 0.7
+                "temperature", 0.5
         );
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);

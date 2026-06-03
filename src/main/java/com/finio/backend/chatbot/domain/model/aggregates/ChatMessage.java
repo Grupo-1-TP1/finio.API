@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 /**
  * ChatMessage Aggregate Root representing a message in the chat history.
  */
@@ -24,6 +26,10 @@ public class ChatMessage extends AuditableAbstractAggregateRoot<ChatMessage> {
     @Column(name = "user_id")
     private Long userId;
 
+    @NotNull
+    @Column(name = "session_id", length = 50)
+    private String sessionId;
+
     @NotBlank
     @Column(length = 20)
     private String role; // "user" o "assistant"
@@ -34,8 +40,9 @@ public class ChatMessage extends AuditableAbstractAggregateRoot<ChatMessage> {
 
     public ChatMessage() {}
 
-    public ChatMessage(Long userId, String role, String content) {
+    public ChatMessage(Long userId, String sessionId, String role, String content) {
         this.userId = userId;
+        this.sessionId = sessionId;
         this.role = role;
         this.content = content;
     }

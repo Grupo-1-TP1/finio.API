@@ -10,5 +10,5 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     /**
      * Fetches the last 10 messages of a specific user ordered chronologically.
      */
-    List<ChatMessage> findTop10ByUserIdOrderByIdAsc(Long userId);
+    List<ChatMessage> findTop10BySessionIdOrderByIdAsc(String sessionId);
 }
