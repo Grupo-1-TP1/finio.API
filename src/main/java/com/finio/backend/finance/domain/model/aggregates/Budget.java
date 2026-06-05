@@ -56,4 +56,11 @@ public class Budget extends AuditableAbstractAggregateRoot<Budget> {
         this.startDate = command.startDate();
         this.endDate = command.endDate();
     }
+
+    public void increaseSpent(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("The spent amount must be positive");
+        }
+        this.spent = this.spent.add(amount);
+    }
 }

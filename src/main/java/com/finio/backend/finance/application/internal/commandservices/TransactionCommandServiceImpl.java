@@ -6,10 +6,12 @@ import com.finio.backend.finance.domain.model.aggregates.Transaction;
 import com.finio.backend.finance.domain.model.aggregates.TransactionType;
 import com.finio.backend.finance.domain.model.commands.CreateTransactionCommand;
 import com.finio.backend.finance.domain.model.commands.DeleteTransactionCommand;
+import com.finio.backend.finance.domain.model.events.TransactionCreatedEvent;
 import com.finio.backend.finance.domain.services.TransactionCommandService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.AccountRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.CategoryRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.TransactionRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
@@ -20,13 +22,16 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TransactionCommandServiceImpl(TransactionRepository transactionRepository,
                                          AccountRepository accountRepository,
-                                         CategoryRepository categoryRepository) {
+                                         CategoryRepository categoryRepository,
+                                         ApplicationEventPublisher eventPublisher) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -52,7 +57,21 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
 
         Transaction transaction = new Transaction(command, account, category);
         try {
-            return Optional.of(transactionRepository.save(transaction));
+            Transaction savedTransaction = transactionRepository.save(transaction);
+
+            if (savedTransaction.getType() == TransactionType.EXPENSE) {
+                var event = new TransactionCreatedEvent(
+                        account.getUserId(),
+                        category.getCategoryId(),
+                        savedTransaction.getType().name(),
+                        savedTransaction.getAmount(),
+                        savedTransaction.getDescription(),
+                        savedTransaction.getTransactionDate()
+                );
+                eventPublisher.publishEvent(event);
+            }
+
+            return Optional.of(savedTransaction);
         } catch (Exception e) {
             return Optional.empty();
         }
