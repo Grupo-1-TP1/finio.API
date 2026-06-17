@@ -9,8 +9,7 @@ public class CreateBudgetCommandFromResourceAssembler {
                 resource.userId(),
                 resource.categoryId(),
                 resource.amount(),
-                resource.startDate(),
-                resource.endDate()
+                resource.date()
         );
     }
 }

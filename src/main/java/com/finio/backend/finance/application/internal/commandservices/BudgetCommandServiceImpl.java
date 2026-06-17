@@ -28,6 +28,20 @@ public class BudgetCommandServiceImpl implements BudgetCommandService {
         }
 
         try {
+            int month = command.date().getMonthValue();
+            int year = command.date().getYear();
+
+            boolean exists = budgetRepository.findByUserIdAndCategory_CategoryIdAndMonthAndYear(
+                    command.userId(),
+                    command.categoryId(),
+                    month,
+                    year
+            ).isPresent();
+
+            if (exists) {
+                throw new IllegalStateException("Budget already exists for this month");
+            }
+
             Budget budget = new Budget(command, categoryOptional.get());
             return Optional.of(budgetRepository.save(budget));
         } catch (Exception e) {

@@ -33,19 +33,22 @@ public class Budget extends AuditableAbstractAggregateRoot<Budget> {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal spent;
 
-    @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    @Column(nullable = false)
+    private LocalDate date;
 
-    @Column(name = "end_date", nullable = false)
-    private LocalDate endDate;
+    @Column(nullable = false)
+    private Integer month;
 
-    public Budget(Long userId, Category category, BigDecimal amount, LocalDate startDate, LocalDate endDate) {
+    @Column(nullable = false)
+    private Integer year;
+
+    public Budget(Long userId, Category category, BigDecimal amount, LocalDate date) {
         this.userId = userId;
         this.category = category;
         this.amount = amount;
         this.spent = BigDecimal.ZERO;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        this.month = date.getMonthValue();
+        this.year = date.getYear();
     }
 
     public Budget(CreateBudgetCommand command, Category category) {
@@ -53,8 +56,9 @@ public class Budget extends AuditableAbstractAggregateRoot<Budget> {
         this.category = category;
         this.amount = command.amount();
         this.spent = BigDecimal.ZERO;
-        this.startDate = command.startDate();
-        this.endDate = command.endDate();
+        this.date = LocalDate.now();
+        this.month = date.getMonthValue();
+        this.year = date.getYear();
     }
 
     public void increaseSpent(BigDecimal amount) {
