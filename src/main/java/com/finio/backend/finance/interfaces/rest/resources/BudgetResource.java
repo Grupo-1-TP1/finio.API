@@ -9,6 +9,7 @@ public record BudgetResource(
         Long categoryId,
         BigDecimal amount,
         BigDecimal spent,
-        LocalDate startDate,
-        LocalDate endDate
+        LocalDate date,
+        Integer month,
+        Integer year
 ) {}

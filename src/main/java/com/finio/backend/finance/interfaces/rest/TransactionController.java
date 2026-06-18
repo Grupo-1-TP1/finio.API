@@ -5,8 +5,10 @@ import com.finio.backend.finance.domain.services.TransactionCommandService;
 import com.finio.backend.finance.domain.services.TransactionQueryService;
 import com.finio.backend.finance.interfaces.rest.resources.CreateTransactionResource;
 import com.finio.backend.finance.interfaces.rest.resources.TransactionResource;
+import com.finio.backend.finance.interfaces.rest.resources.UpdateTransactionResource;
 import com.finio.backend.finance.interfaces.rest.transform.CreateTransactionCommandFromResourceAssembler;
 import com.finio.backend.finance.interfaces.rest.transform.TransactionResourceFromEntityAssembler;
+import com.finio.backend.finance.interfaces.rest.transform.UpdateTransactionCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,6 +52,13 @@ public class TransactionController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(resources);
+    }
+
+    @PutMapping("/{transactionId}")
+    public ResponseEntity<TransactionResource> updateTransaction(@PathVariable Long transactionId, @RequestBody UpdateTransactionResource resource) {
+        return transactionCommandService.handle(UpdateTransactionCommandFromResourceAssembler.toCommandFromResource(transactionId, resource))
+                .map(transaction -> ResponseEntity.ok(TransactionResourceFromEntityAssembler.toResourceFromEntity(transaction)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{transactionId}")

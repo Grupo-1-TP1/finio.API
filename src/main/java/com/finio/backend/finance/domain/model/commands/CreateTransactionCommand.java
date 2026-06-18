@@ -1,6 +1,6 @@
 package com.finio.backend.finance.domain.model.commands;
 
-import com.finio.backend.finance.domain.model.aggregates.TransactionType;
+import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

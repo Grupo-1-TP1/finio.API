@@ -5,6 +5,7 @@ import com.finio.backend.shared.domain.model.aggregates.AuditableAbstractAggrega
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "accounts")
@@ -38,5 +39,19 @@ public class Account extends AuditableAbstractAggregateRoot<Account> {
         this.userId = createAccountCommand.userId();
         this.name = createAccountCommand.name();
         this.balance = createAccountCommand.balance();
+    }
+
+    public BigDecimal calculateSavingsFund(BigDecimal savingPercentage) {
+        if (savingPercentage == null || savingPercentage.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return this.balance
+                .multiply(savingPercentage)
+                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+    }
+
+    public BigDecimal getAvailableBalance(BigDecimal savingPercentage) {
+        BigDecimal savingsFund = this.calculateSavingsFund(savingPercentage);
+        return this.balance.subtract(savingsFund);
     }
 }

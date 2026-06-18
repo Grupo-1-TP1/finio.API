@@ -1,6 +1,8 @@
 package com.finio.backend.finance.domain.model.aggregates;
 
 import com.finio.backend.finance.domain.model.commands.CreateRecurringTransactionCommand;
+import com.finio.backend.finance.domain.model.valueobjects.Frequency;
+import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
 import com.finio.backend.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,8 +43,8 @@ public class RecurringTransaction extends AuditableAbstractAggregateRoot<Recurri
     @Column(length = 255)
     private String description;
 
-    @Column(nullable = false, length = 30)
-    private String frequency;
+    @Column(nullable = false)
+    private Frequency frequency;
 
     @Column(name = "next_execution_date", nullable = false)
     private LocalDate nextExecutionDate;
@@ -56,5 +58,18 @@ public class RecurringTransaction extends AuditableAbstractAggregateRoot<Recurri
         this.description = command.description();
         this.frequency = command.frequency();
         this.nextExecutionDate = command.nextExecutionDate();
+    }
+
+    public void updateNextExecutionDate() {
+        if (this.frequency == null) {
+            throw new IllegalStateException("Frequency cannot be null to calculate next execution date");
+        }
+
+        switch (this.frequency) {
+            case DAILY -> this.nextExecutionDate = this.nextExecutionDate.plusDays(1);
+            case WEEKLY -> this.nextExecutionDate = this.nextExecutionDate.plusWeeks(1);
+            case MONTHLY -> this.nextExecutionDate = this.nextExecutionDate.plusMonths(1);
+            case YEARLY -> this.nextExecutionDate = this.nextExecutionDate.plusYears(1);
+        }
     }
 }

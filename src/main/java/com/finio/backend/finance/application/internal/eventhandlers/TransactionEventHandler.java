@@ -29,8 +29,13 @@ public class TransactionEventHandler {
         if (!"EXPENSE".equals(event.type())) return;
 
         LocalDate today = LocalDate.now();
-        var budgetOptional = budgetRepository.findByUserIdAndCategory_CategoryIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(
-                event.userId(), event.categoryId(), today, today
+        int currentMonth = today.getMonthValue();
+        int currentYear = today.getYear();
+        var budgetOptional = budgetRepository.findByUserIdAndCategory_CategoryIdAndMonthAndYear(
+                event.userId(),
+                event.categoryId(),
+                currentMonth,
+                currentYear
         );
 
         budgetOptional.ifPresent(budget -> {

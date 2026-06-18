@@ -3,13 +3,19 @@ package com.finio.backend.iam.application.internal.commandservices;
 import com.finio.backend.iam.application.internal.outboundservices.hashing.HashingService;
 import com.finio.backend.iam.application.internal.outboundservices.tokens.TokenService;
 import com.finio.backend.iam.domain.model.aggregates.User;
+import com.finio.backend.iam.domain.model.commands.DeleteUserCommand;
+import com.finio.backend.iam.domain.model.commands.ResetPasswordCommand;
 import com.finio.backend.iam.domain.model.commands.SignInCommand;
 import com.finio.backend.iam.domain.model.commands.SignUpCommand;
+import com.finio.backend.iam.domain.model.events.UserAccountDeletedEvent;
 import com.finio.backend.iam.domain.services.UserCommandService;
 import com.finio.backend.iam.domain.services.outboundports.ProfileServiceFacade;
 import com.finio.backend.iam.infrastructure.persistence.jpa.repositories.RoleRepository;
 import com.finio.backend.iam.infrastructure.persistence.jpa.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -31,15 +37,18 @@ public class UserCommandServiceImpl implements UserCommandService {
     private final TokenService tokenService;
     private final RoleRepository roleRepository;
     private final ProfileServiceFacade profileServiceFacade;
+    private final ApplicationEventPublisher eventPublisher;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService, RoleRepository roleRepository, ProfileServiceFacade profileServiceFacade) {
+    public UserCommandServiceImpl(UserRepository userRepository, HashingService hashingService, TokenService tokenService, RoleRepository roleRepository, ProfileServiceFacade profileServiceFacade, ApplicationEventPublisher eventPublisher, PasswordEncoder passwordEncoder) {
 
         this.userRepository = userRepository;
         this.hashingService = hashingService;
         this.tokenService = tokenService;
         this.roleRepository = roleRepository;
         this.profileServiceFacade = profileServiceFacade;
-
+        this.eventPublisher = eventPublisher;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -90,4 +99,33 @@ public class UserCommandServiceImpl implements UserCommandService {
 
         return userRepository.findByEmail(command.email());
     }
+
+    @Transactional
+    public Optional<User> handle(ResetPasswordCommand command) {
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String encryptedPassword = passwordEncoder.encode(command.newPassword());
+        user.setPassword(encryptedPassword);
+        return Optional.of(userRepository.save(user));
+    }
+
+    @Override
+    @Transactional
+    public boolean handle(DeleteUserCommand command) {
+        if (!userRepository.existsById(command.userId())) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        try {
+            eventPublisher.publishEvent(new UserAccountDeletedEvent(command.userId()));
+            userRepository.deleteById(command.userId());
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 }

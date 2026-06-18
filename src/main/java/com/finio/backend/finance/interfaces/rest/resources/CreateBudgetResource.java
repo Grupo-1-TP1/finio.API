@@ -7,6 +7,5 @@ public record CreateBudgetResource(
         Long userId,
         Long categoryId,
         BigDecimal amount,
-        LocalDate startDate,
-        LocalDate endDate
+        LocalDate date
 ) {}

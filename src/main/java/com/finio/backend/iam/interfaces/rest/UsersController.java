@@ -1,9 +1,13 @@
 package com.finio.backend.iam.interfaces.rest;
 
+import com.finio.backend.iam.domain.model.commands.DeleteUserCommand;
 import com.finio.backend.iam.domain.model.queries.GetAllUsersQuery;
 import com.finio.backend.iam.domain.model.queries.GetUserByIdQuery;
+import com.finio.backend.iam.domain.services.UserCommandService;
 import com.finio.backend.iam.domain.services.UserQueryService;
+import com.finio.backend.iam.interfaces.rest.resources.ResetPasswordResource;
 import com.finio.backend.iam.interfaces.rest.resources.UserResource;
+import com.finio.backend.iam.interfaces.rest.transform.ResetPasswordCommandFromResourceAssembler;
 import com.finio.backend.iam.interfaces.rest.transform.UserResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
@@ -24,9 +28,11 @@ import java.util.List;
 @Tag(name = "Users", description = "User Management Endpoints")
 public class UsersController {
     private final UserQueryService userQueryService;
+    private final UserCommandService userCommandService;
 
-    public UsersController(UserQueryService userQueryService) {
+    public UsersController(UserQueryService userQueryService, UserCommandService userCommandService) {
         this.userQueryService = userQueryService;
+        this.userCommandService = userCommandService;
     }
 
     /**
@@ -61,4 +67,20 @@ public class UsersController {
         var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
         return ResponseEntity.ok(userResource);
     }
+
+    @PutMapping("/change-password/{userId}")
+    public ResponseEntity<UserResource> changePassword(@PathVariable Long userId, @RequestBody ResetPasswordResource resource) {
+        return userCommandService.handle(ResetPasswordCommandFromResourceAssembler.toCommandFromResource(userId, resource))
+                .map(user -> ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(user)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+        var command = new DeleteUserCommand(userId);
+        var deleted = userCommandService.handle(command);
+        if (!deleted) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok("User deleted successfully");
+    }
+
 }

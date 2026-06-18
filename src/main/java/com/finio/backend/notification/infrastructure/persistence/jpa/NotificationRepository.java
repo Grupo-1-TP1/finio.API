@@ -7,6 +7,6 @@ import java.util.List;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    // Recupera todas las alertas de un estudiante específico para su bandeja de entrada
     List<Notification> findByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

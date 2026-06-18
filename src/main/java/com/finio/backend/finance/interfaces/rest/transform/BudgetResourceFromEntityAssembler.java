@@ -11,8 +11,9 @@ public class BudgetResourceFromEntityAssembler {
                 entity.getCategory().getCategoryId(),
                 entity.getAmount(),
                 entity.getSpent(),
-                entity.getStartDate(),
-                entity.getEndDate()
+                entity.getDate(),
+                entity.getMonth(),
+                entity.getYear()
         );
     }
 }
