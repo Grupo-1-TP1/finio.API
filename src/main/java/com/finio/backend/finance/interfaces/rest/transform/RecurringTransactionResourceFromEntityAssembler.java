@@ -13,7 +13,7 @@ public class RecurringTransactionResourceFromEntityAssembler {
                 entity.getType().name(),
                 entity.getAmount(),
                 entity.getDescription(),
-                entity.getFrequency(),
+                entity.getFrequency().name(),
                 entity.getNextExecutionDate()
         );
     }

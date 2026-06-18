@@ -3,7 +3,8 @@ package com.finio.backend.finance.application.internal.commandservices;
 import com.finio.backend.finance.domain.model.aggregates.Account;
 import com.finio.backend.finance.domain.model.aggregates.Category;
 import com.finio.backend.finance.domain.model.aggregates.Transaction;
-import com.finio.backend.finance.domain.model.aggregates.TransactionType;
+import com.finio.backend.finance.domain.model.commands.UpdateTransactionCommand;
+import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
 import com.finio.backend.finance.domain.model.commands.CreateTransactionCommand;
 import com.finio.backend.finance.domain.model.commands.DeleteTransactionCommand;
 import com.finio.backend.finance.domain.model.events.TransactionCreatedEvent;
@@ -79,6 +80,20 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
 
     @Override
     @Transactional
+    public Optional<Transaction> handle(UpdateTransactionCommand command) {
+        Transaction transaction = transactionRepository.findById(command.transactionId())
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+
+        transaction.setCategory(categoryRepository.findById(command.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException("Category not found")));
+
+        transaction.setAmount(command.amount());
+        transaction.setDescription(command.description());
+        return Optional.of(transactionRepository.save(transaction));
+    }
+
+    @Override
+    @Transactional
     public boolean handle(DeleteTransactionCommand command) {
         var transactionOptional = transactionRepository.findById(command.transactionId());
         if (transactionOptional.isEmpty()) {
@@ -89,7 +104,7 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             // Regla de negocio: Al eliminar una transacción, revertimos el saldo de la cuenta antes de borrarla
             var transaction = transactionOptional.get();
             var account = transaction.getAccount();
-            if (transaction.getType() == com.finio.backend.finance.domain.model.aggregates.TransactionType.EXPENSE) {
+            if (transaction.getType() == TransactionType.EXPENSE) {
                 account.setBalance(account.getBalance().add(transaction.getAmount()));
             } else {
                 account.setBalance(account.getBalance().subtract(transaction.getAmount()));

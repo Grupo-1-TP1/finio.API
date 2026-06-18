@@ -1,6 +1,6 @@
 package com.finio.backend.finance.interfaces.rest.transform;
 
-import com.finio.backend.finance.domain.model.aggregates.TransactionType;
+import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
 import com.finio.backend.finance.domain.model.commands.CreateTransactionCommand;
 import com.finio.backend.finance.interfaces.rest.resources.CreateTransactionResource;
 

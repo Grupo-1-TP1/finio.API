@@ -1,6 +1,8 @@
 package com.finio.backend.iam.domain.services;
 
 import com.finio.backend.iam.domain.model.aggregates.User;
+import com.finio.backend.iam.domain.model.commands.DeleteUserCommand;
+import com.finio.backend.iam.domain.model.commands.ResetPasswordCommand;
 import com.finio.backend.iam.domain.model.commands.SignInCommand;
 import com.finio.backend.iam.domain.model.commands.SignUpCommand;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -11,4 +13,6 @@ public interface UserCommandService {
     Optional<ImmutablePair<User, String>> handle(SignInCommand command);
 
     Optional<User> handle(SignUpCommand command, String name);
+    Optional<User> handle(ResetPasswordCommand command);
+    boolean handle(DeleteUserCommand command);
 }

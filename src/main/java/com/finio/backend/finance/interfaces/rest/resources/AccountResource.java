@@ -6,5 +6,8 @@ public record AccountResource(
         Long id,
         Long userId,
         String name,
-        BigDecimal balance
+        BigDecimal balance,
+        BigDecimal availableBalance,
+        BigDecimal savingsFund,
+        BigDecimal savingPercentage
 ) {}

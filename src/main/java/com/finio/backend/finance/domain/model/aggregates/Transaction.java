@@ -1,6 +1,7 @@
 package com.finio.backend.finance.domain.model.aggregates;
 
 import com.finio.backend.finance.domain.model.commands.CreateTransactionCommand;
+import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
 import com.finio.backend.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import lombok.Getter;

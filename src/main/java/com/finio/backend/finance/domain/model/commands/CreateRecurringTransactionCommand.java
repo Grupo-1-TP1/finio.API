@@ -1,6 +1,7 @@
 package com.finio.backend.finance.domain.model.commands;
 
-import com.finio.backend.finance.domain.model.aggregates.TransactionType;
+import com.finio.backend.finance.domain.model.valueobjects.Frequency;
+import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -12,6 +13,6 @@ public record CreateRecurringTransactionCommand(
         TransactionType type,
         BigDecimal amount,
         String description,
-        String frequency, // Ej: "MONTHLY", "WEEKLY"
+        Frequency frequency,
         LocalDate nextExecutionDate
 ) {}
