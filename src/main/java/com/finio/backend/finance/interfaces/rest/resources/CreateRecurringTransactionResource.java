@@ -7,6 +7,7 @@ public record CreateRecurringTransactionResource(
         Long userId,
         Long accountId,
         Long categoryId,
+        Long savingGoalId,
         String type, // "INCOME" o "EXPENSE"
         BigDecimal amount,
         String description,

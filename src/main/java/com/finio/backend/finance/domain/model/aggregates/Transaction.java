@@ -33,6 +33,10 @@ public class Transaction extends AuditableAbstractAggregateRoot<Transaction> {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "saving_goal_id")
+    private SavingGoal savingGoal;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
@@ -46,21 +50,23 @@ public class Transaction extends AuditableAbstractAggregateRoot<Transaction> {
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
-    public Transaction(Long userId, Account account, Category category, TransactionType type,
+    public Transaction(Long userId, Account account, Category category, SavingGoal savingGoal, TransactionType type,
                        BigDecimal amount, String description, LocalDate transactionDate) {
         this.userId = userId;
         this.account = account;
         this.category = category;
+        this.savingGoal = savingGoal;
         this.type = type;
         this.amount = amount;
         this.description = description;
         this.transactionDate = transactionDate;
     }
 
-    public Transaction(CreateTransactionCommand command, Account account, Category category) {
+    public Transaction(CreateTransactionCommand command, Account account, Category category, SavingGoal savingGoal) {
         this.userId = command.userId();
         this.account = account;
         this.category = category;
+        this.savingGoal = savingGoal;
         this.type = command.type();
         this.amount = command.amount();
         this.description = command.description();

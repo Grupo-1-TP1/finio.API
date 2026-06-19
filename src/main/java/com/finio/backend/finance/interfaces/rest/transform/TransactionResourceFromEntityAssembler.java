@@ -8,8 +8,9 @@ public class TransactionResourceFromEntityAssembler {
         return new TransactionResource(
                 entity.getTransactionId(),
                 entity.getUserId(),
-                entity.getAccount().getAccountId(), // Recupera la FK navegando por el objeto JPA
-                entity.getCategory().getCategoryId(), // Recupera la FK navegando por el objeto JPA
+                entity.getAccount().getAccountId(),
+                entity.getCategory().getCategoryId(),
+                entity.getSavingGoal().getSavingGoalId(),
                 entity.getType().name(),
                 entity.getAmount(),
                 entity.getDescription(),

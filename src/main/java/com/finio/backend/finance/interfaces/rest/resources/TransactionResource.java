@@ -8,6 +8,7 @@ public record TransactionResource(
         Long userId,
         Long accountId,
         Long categoryId,
+        Long savingGoalId,
         String type,
         BigDecimal amount,
         String description,

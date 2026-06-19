@@ -7,6 +7,7 @@ public record CreateTransactionResource(
         Long userId,
         Long accountId,
         Long categoryId,
+        Long savingGoalId,
         String type,
         BigDecimal amount,
         String description,
