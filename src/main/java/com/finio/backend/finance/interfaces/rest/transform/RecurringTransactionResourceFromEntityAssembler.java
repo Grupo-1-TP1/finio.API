@@ -10,6 +10,7 @@ public class RecurringTransactionResourceFromEntityAssembler {
                 entity.getUserId(),
                 entity.getAccount().getAccountId(),
                 entity.getCategory().getCategoryId(),
+                entity.getSavingGoal().getSavingGoalId(),
                 entity.getType().name(),
                 entity.getAmount(),
                 entity.getDescription(),

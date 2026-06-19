@@ -8,6 +8,7 @@ public record CreateTransactionCommand(
         Long userId,
         Long accountId,
         Long categoryId,
+        Long savingGoalId,
         TransactionType type,
         BigDecimal amount,
         String description,

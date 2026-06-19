@@ -11,6 +11,7 @@ public class CreateRecurringTransactionCommandFromResourceAssembler {
                 resource.userId(),
                 resource.accountId(),
                 resource.categoryId(),
+                resource.savingGoalId(),
                 TransactionType.valueOf(resource.type().toUpperCase()),
                 resource.amount(),
                 resource.description(),

@@ -37,6 +37,7 @@ public class RecurringTransactionScheduler {
                         recurring.getUserId(),
                         recurring.getAccount().getAccountId(),
                         recurring.getCategory().getCategoryId(),
+                        recurring.getSavingGoal().getSavingGoalId(),
                         recurring.getType(), // "INCOME" o "EXPENSE"
                         recurring.getAmount(),
                         "[Recurrente] " + (recurring.getDescription() != null ? recurring.getDescription() : ""),

@@ -10,6 +10,7 @@ public record CreateRecurringTransactionCommand(
         Long userId,
         Long accountId,
         Long categoryId,
+        Long savingGoalId,
         TransactionType type,
         BigDecimal amount,
         String description,

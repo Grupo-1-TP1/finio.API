@@ -2,6 +2,7 @@ package com.finio.backend.finance.application.internal.commandservices;
 
 import com.finio.backend.finance.domain.model.aggregates.Account;
 import com.finio.backend.finance.domain.model.aggregates.Category;
+import com.finio.backend.finance.domain.model.aggregates.SavingGoal;
 import com.finio.backend.finance.domain.model.aggregates.Transaction;
 import com.finio.backend.finance.domain.model.commands.UpdateTransactionCommand;
 import com.finio.backend.finance.domain.model.valueobjects.TransactionType;
@@ -11,6 +12,7 @@ import com.finio.backend.finance.domain.model.events.TransactionCreatedEvent;
 import com.finio.backend.finance.domain.services.TransactionCommandService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.AccountRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.CategoryRepository;
+import com.finio.backend.finance.infrastructure.persistence.jpa.SavingGoalRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.TransactionRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -23,15 +25,18 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
+    private final SavingGoalRepository savingGoalRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public TransactionCommandServiceImpl(TransactionRepository transactionRepository,
                                          AccountRepository accountRepository,
                                          CategoryRepository categoryRepository,
-                                         ApplicationEventPublisher eventPublisher) {
+                                         ApplicationEventPublisher eventPublisher,
+                                         SavingGoalRepository savingGoalRepository) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
+        this.savingGoalRepository = savingGoalRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -48,15 +53,27 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
 
         Account account = accountOptional.get();
         Category category = categoryOptional.get();
+        SavingGoal savingGoal = null;
+
+        if (command.savingGoalId() != null) {
+            Optional<SavingGoal> savingGoalOptional = savingGoalRepository.findById(command.savingGoalId());
+            if (savingGoalOptional.isPresent()) {
+                savingGoal = savingGoalOptional.get();
+            }
+        }
 
         if (command.type() == TransactionType.EXPENSE) {
             account.setBalance(account.getBalance().subtract(command.amount()));
+            if (savingGoal != null) {
+                savingGoal.setCurrentAmount(savingGoal.getCurrentAmount().add(command.amount()));
+                savingGoalRepository.save(savingGoal);
+            }
         } else if (command.type() == TransactionType.INCOME) {
             account.setBalance(account.getBalance().add(command.amount()));
         }
         accountRepository.save(account);
 
-        Transaction transaction = new Transaction(command, account, category);
+        Transaction transaction = new Transaction(command, account, category, savingGoal);
         try {
             Transaction savedTransaction = transactionRepository.save(transaction);
 
