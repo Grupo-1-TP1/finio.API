@@ -33,6 +33,10 @@ public class RecurringTransaction extends AuditableAbstractAggregateRoot<Recurri
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "saving_goal_id")
+    private SavingGoal savingGoal;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
@@ -49,10 +53,11 @@ public class RecurringTransaction extends AuditableAbstractAggregateRoot<Recurri
     @Column(name = "next_execution_date", nullable = false)
     private LocalDate nextExecutionDate;
 
-    public RecurringTransaction(CreateRecurringTransactionCommand command, Account account, Category category) {
+    public RecurringTransaction(CreateRecurringTransactionCommand command, Account account, Category category, SavingGoal savingGoal) {
         this.userId = command.userId();
         this.account = account;
         this.category = category;
+        this.savingGoal = savingGoal;
         this.type = command.type();
         this.amount = command.amount();
         this.description = command.description();
