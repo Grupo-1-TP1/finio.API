@@ -84,6 +84,25 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
 
     @Override
     @Transactional
+    public Optional<Profile> handle(UpdateSavingPercentageCommand command) {
+        Profile profile = profileRepository.findByUserId(command.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found for user ID: " + command.userId()));
+
+        profile.setSaving_percentage(command.percentage());
+
+        Profile savedProfile = profileRepository.save(profile);
+
+        List<Account> accounts = accountRepository.findByUserId(command.userId());
+        for (Account account : accounts) {
+            account.updateSavingsMetrics(savedProfile.getSaving_percentage(), account.getBalance());
+            accountRepository.save(account);
+        }
+
+        return Optional.of(savedProfile);
+    }
+
+    @Override
+    @Transactional
     public Optional<Profile> handle(UpdatePrivacyPermissionsCommand command) {
         Profile profile = profileRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new IllegalArgumentException("Profile not found for user ID: " + command.userId()));
