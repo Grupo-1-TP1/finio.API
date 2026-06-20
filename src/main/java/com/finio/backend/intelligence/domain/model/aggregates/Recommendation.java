@@ -26,17 +26,12 @@ public class Recommendation extends AuditableAbstractAggregateRoot<Recommendatio
     @Column(name = "projected_savings", nullable = false)
     private Double projectedSavings;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private Status status;
-
     @OneToMany(mappedBy = "recommendation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecommendationDetail> details = new ArrayList<>();
 
     public Recommendation(CreateRecommendationCommand command) {
         this.userId = command.userId();
         this.projectedSavings = command.projectedSavings();
-        this.status = Status.PENDING;
     }
 
     public void addDetail(RecommendationDetail detail) {

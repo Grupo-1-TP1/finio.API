@@ -23,10 +23,8 @@ public class RecommendationCommandServiceImpl implements RecommendationCommandSe
     @Transactional
     public Optional<Recommendation> handle(CreateRecommendationCommand command) {
         try {
-            // 1. Instanciamos el objeto maestro (Recommendation)
             Recommendation recommendation = new Recommendation(command);
 
-            // 2. Mapeamos y agregamos los detalles (RecommendationDetail) vinculándolos al padre
             if (command.details() != null) {
                 for (var detailCommand : command.details()) {
                     RecommendationDetail detail = new RecommendationDetail(

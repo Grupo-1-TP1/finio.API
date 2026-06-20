@@ -20,7 +20,6 @@ public class RecommendationResourceFromEntityAssembler {
                 entity.getRecommendationId(),
                 entity.getUserId(),
                 entity.getProjectedSavings(),
-                entity.getStatus().name(),
                 detailResources
         );
     }

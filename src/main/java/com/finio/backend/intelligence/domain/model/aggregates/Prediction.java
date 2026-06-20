@@ -24,12 +24,16 @@ public class Prediction extends AuditableAbstractAggregateRoot<Prediction> {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
+    @Column(name = "text")
+    private String text;
+
     @Column(name = "transaction_id", nullable = false)
     private Long transactionId;
 
     public Prediction(CreatePredictionCommand command) {
         this.confidenceScore = command.confidenceScore();
         this.categoryId = command.categoryId();
+        this.text = command.text();
         this.transactionId = command.transactionId();
     }
 }

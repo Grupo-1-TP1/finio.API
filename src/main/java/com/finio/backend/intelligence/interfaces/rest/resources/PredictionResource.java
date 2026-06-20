@@ -4,5 +4,6 @@ public record PredictionResource(
         Long id,
         Double confidenceScore,
         Long categoryId,
+        String text,
         Long transactionId
 ) {}

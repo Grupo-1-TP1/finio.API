@@ -5,6 +5,8 @@ import com.finio.backend.chatbot.domain.model.commands.SendMessageCommand;
 import com.finio.backend.chatbot.domain.services.outboundports.AiClientGateway;
 import com.finio.backend.chatbot.domain.services.outboundports.FinanceContextFacade;
 import com.finio.backend.chatbot.infrastructure.persistence.jpa.repositories.ChatMessageRepository;
+import com.finio.backend.chatbot.interfaces.rest.resources.RecentTransactionResource;
+import com.finio.backend.chatbot.interfaces.rest.resources.UserFinancialSnapshotResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -14,7 +16,7 @@ public class ChatCommandServiceImpl {
 
     private final ChatMessageRepository chatMessageRepository;
     private final AiClientGateway aiClientGateway;
-    private final FinanceContextFacade financeContextFacade; // Inyectamos la fachada de finanzas
+    private final FinanceContextFacade financeContextFacade;
 
     public ChatCommandServiceImpl(ChatMessageRepository chatMessageRepository, AiClientGateway aiClientGateway, FinanceContextFacade financeContextFacade) {
         this.chatMessageRepository = chatMessageRepository;
@@ -24,25 +26,32 @@ public class ChatCommandServiceImpl {
 
     @Transactional
     public ChatMessage handle(SendMessageCommand command) {
-        // 1. Guardar el mensaje del usuario
         ChatMessage userMessage = new ChatMessage(command.userId(), command.sessionId(), "user", command.messageContent());
         chatMessageRepository.save(userMessage);
 
-        // 🔥 SOLUCIÓN 1: Forzamos a Hibernate a escribir IMMEDIATAMENTE en la BD
-        // Esto asegura que el mensaje actual y los anteriores estén perfectamente asentados en las tablas.
         chatMessageRepository.flush();
 
-        // 2. Recuperar el historial contextual (últimos 10 mensajes)
         List<ChatMessage> history = chatMessageRepository.findTop10BySessionIdOrderByIdAsc(command.sessionId());
 
-        // 3. Traer la información financiera real
-        var balance = financeContextFacade.getUserTotalBalance(command.userId());
-        var spending = financeContextFacade.getUserSpendingByCategory(command.userId());
+        var totalBalance = financeContextFacade.getUserTotalBalance(command.userId());
+        var totalIncome = financeContextFacade.getUserTotalIncomeThisMonth(command.userId());   // 🔥 Agregado real
+        var totalExpense = financeContextFacade.getUserTotalExpenseThisMonth(command.userId()); // 🔥 Agregado real
+        var spendingCategory = financeContextFacade.getUserSpendingByCategory(command.userId());
 
-        // 4. Consultar a OpenAI pasando el historial verificado
-        String aiResponseContent = aiClientGateway.generateResponse(history, balance, spending);
+        List<RecentTransactionResource> recentTransactions = financeContextFacade.getRecentTransactions(command.userId(), 10); // 🔥 Agregado real
 
-        // 5. Guardar respuesta del bot
+        Double savingPercentage = financeContextFacade.getUserSavingPercentage(command.userId()); // 🔥 Agregado real
+
+        UserFinancialSnapshotResource financialSnapshot = new UserFinancialSnapshotResource(
+                totalBalance,
+                totalIncome,
+                totalExpense,
+                spendingCategory,
+                recentTransactions
+        );
+
+        String aiResponseContent = aiClientGateway.generateResponse(history, financialSnapshot, savingPercentage);
+
         ChatMessage aiMessage = new ChatMessage(command.userId(), command.sessionId(), "assistant", aiResponseContent);
         chatMessageRepository.save(aiMessage);
 
