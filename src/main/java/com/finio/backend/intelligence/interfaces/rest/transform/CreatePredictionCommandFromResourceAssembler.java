@@ -8,6 +8,7 @@ public class CreatePredictionCommandFromResourceAssembler {
         return new CreatePredictionCommand(
                 resource.confidenceScore(),
                 resource.categoryId(),
+                resource.text(),
                 resource.transactionId()
         );
     }

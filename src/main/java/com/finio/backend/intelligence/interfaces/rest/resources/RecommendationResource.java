@@ -6,6 +6,5 @@ public record RecommendationResource(
         Long id,
         Long userId,
         Double projectedSavings,
-        String status,
         List<RecommendationDetailResource> details
 ) {}

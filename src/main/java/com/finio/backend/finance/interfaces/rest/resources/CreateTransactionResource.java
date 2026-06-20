@@ -11,5 +11,7 @@ public record CreateTransactionResource(
         String type,
         BigDecimal amount,
         String description,
-        LocalDate transactionDate
+        LocalDate transactionDate,
+        Double confidence,
+        Long predictedCategoryId
 ) {}
