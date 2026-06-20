@@ -9,6 +9,7 @@ import com.finio.backend.finance.interfaces.rest.resources.UpdateTransactionReso
 import com.finio.backend.finance.interfaces.rest.transform.CreateTransactionCommandFromResourceAssembler;
 import com.finio.backend.finance.interfaces.rest.transform.TransactionResourceFromEntityAssembler;
 import com.finio.backend.finance.interfaces.rest.transform.UpdateTransactionCommandFromResourceAssembler;
+import com.finio.backend.intelligence.application.internal.commandservices.PredictionCommandServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,10 +26,12 @@ public class TransactionController {
 
     private final TransactionCommandService transactionCommandService;
     private final TransactionQueryService transactionQueryService;
+    private final PredictionCommandServiceImpl predictionCommandService;
 
-    public TransactionController(TransactionCommandService transactionCommandService, TransactionQueryService transactionQueryService) {
+    public TransactionController(TransactionCommandService transactionCommandService, TransactionQueryService transactionQueryService, PredictionCommandServiceImpl predictionCommandService) {
         this.transactionCommandService = transactionCommandService;
         this.transactionQueryService = transactionQueryService;
+        this.predictionCommandService = predictionCommandService;
     }
 
     @PostMapping
@@ -36,10 +39,26 @@ public class TransactionController {
         var command = CreateTransactionCommandFromResourceAssembler.toCommandFromResource(resource);
         var transaction = transactionCommandService.handle(command);
 
-        return transaction.map(value -> new ResponseEntity<>(
-                TransactionResourceFromEntityAssembler.toResourceFromEntity(value),
-                HttpStatus.CREATED)
-        ).orElseGet(() -> ResponseEntity.badRequest().build());
+        if (transaction.isPresent()) {
+            var entity = transaction.get();
+
+            if (resource.confidence() != null && resource.predictedCategoryId() != null) {
+                var predictionCommand = new com.finio.backend.intelligence.domain.model.commands.CreatePredictionCommand(
+                        resource.confidence(),
+                        resource.predictedCategoryId(),
+                        resource.description(),
+                        entity.getTransactionId()
+                );
+                predictionCommandService.handle(predictionCommand);
+            }
+
+            return new ResponseEntity<>(
+                    TransactionResourceFromEntityAssembler.toResourceFromEntity(entity),
+                    HttpStatus.CREATED
+            );
+        }
+
+        return ResponseEntity.badRequest().build();
     }
 
     @GetMapping("/user/{userId}")

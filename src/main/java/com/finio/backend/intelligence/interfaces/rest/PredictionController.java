@@ -1,6 +1,7 @@
 package com.finio.backend.intelligence.interfaces.rest;
 
 import com.finio.backend.intelligence.domain.model.commands.DeletePredictionCommand;
+import com.finio.backend.intelligence.domain.model.queries.GetAllPredictionsQuery;
 import com.finio.backend.intelligence.domain.model.queries.GetPredictionByIdQuery;
 import com.finio.backend.intelligence.domain.services.PredictionCommandService;
 import com.finio.backend.intelligence.domain.services.PredictionQueryService;
@@ -13,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/v1/predictions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -36,6 +40,16 @@ public class PredictionController {
                 PredictionResourceFromEntityAssembler.toResourceFromEntity(value),
                 HttpStatus.CREATED)
         ).orElseGet(() -> ResponseEntity.badRequest().build());
+    }
+
+    @GetMapping
+    public ResponseEntity<List<PredictionResource>> getPredictions() {
+        var query = new GetAllPredictionsQuery();
+        var predictions = predictionQueryService.handle(query);
+        var predictionsResources = predictions.stream().map(PredictionResourceFromEntityAssembler::toResourceFromEntity)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(predictionsResources);
     }
 
     @GetMapping("/{predictionId}")

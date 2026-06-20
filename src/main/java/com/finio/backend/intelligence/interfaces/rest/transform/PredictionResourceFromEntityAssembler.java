@@ -9,6 +9,7 @@ public class PredictionResourceFromEntityAssembler {
                 entity.getPredictionId(),
                 entity.getConfidenceScore(),
                 entity.getCategoryId(),
+                entity.getText(),
                 entity.getTransactionId()
         );
     }
