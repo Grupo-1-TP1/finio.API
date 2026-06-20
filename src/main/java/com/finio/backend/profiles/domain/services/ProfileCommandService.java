@@ -11,4 +11,5 @@ public interface ProfileCommandService {
     Optional<Profile> handle(UpdateProfileCommand command);
     Optional<Profile> handle(UpdateProfileNameCommand command);
     Optional<Profile> handle(UpdatePrivacyPermissionsCommand command);
+    Optional<Profile> handle(UpdateSavingPercentageCommand command);
 }
