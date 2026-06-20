@@ -3,6 +3,7 @@ package com.finio.backend.iam.interfaces.rest;
 import com.finio.backend.iam.domain.model.commands.DeleteUserCommand;
 import com.finio.backend.iam.domain.model.queries.GetAllUsersQuery;
 import com.finio.backend.iam.domain.model.queries.GetUserByIdQuery;
+import com.finio.backend.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.finio.backend.iam.domain.services.UserCommandService;
 import com.finio.backend.iam.domain.services.UserQueryService;
 import com.finio.backend.iam.interfaces.rest.resources.ResetPasswordResource;
@@ -68,9 +69,21 @@ public class UsersController {
         return ResponseEntity.ok(userResource);
     }
 
-    @PutMapping("/change-password/{userId}")
-    public ResponseEntity<UserResource> changePassword(@PathVariable Long userId, @RequestBody ResetPasswordResource resource) {
-        return userCommandService.handle(ResetPasswordCommandFromResourceAssembler.toCommandFromResource(userId, resource))
+    @GetMapping(value = "/email/{email}")
+    public ResponseEntity<UserResource> getUserByEmail(@PathVariable String email) {
+        var getUserByEmailQuery = new GetUserByUsernameQuery(email);
+        var user = userQueryService.handle(getUserByEmailQuery);
+
+        if (user.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
+        return ResponseEntity.ok(userResource);
+    }
+
+    @PutMapping("/change-password/{email}")
+    public ResponseEntity<UserResource> changePassword(@PathVariable String email, @RequestBody ResetPasswordResource resource) {
+        return userCommandService.handle(ResetPasswordCommandFromResourceAssembler.toCommandFromResource(email, resource))
                 .map(user -> ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(user)))
                 .orElse(ResponseEntity.notFound().build());
     }

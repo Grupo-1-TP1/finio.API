@@ -102,7 +102,7 @@ public class UserCommandServiceImpl implements UserCommandService {
 
     @Transactional
     public Optional<User> handle(ResetPasswordCommand command) {
-        User user = userRepository.findById(command.userId())
+        User user = userRepository.findByEmail(command.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String encryptedPassword = passwordEncoder.encode(command.newPassword());
