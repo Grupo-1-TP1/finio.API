@@ -7,14 +7,8 @@ import com.finio.backend.profiles.domain.model.queries.GetProfileByIdQuery;
 import com.finio.backend.profiles.domain.model.queries.GetProfileByUserIdQuery;
 import com.finio.backend.profiles.domain.services.ProfileCommandService;
 import com.finio.backend.profiles.domain.services.ProfileQueryService;
-import com.finio.backend.profiles.interfaces.rest.resources.ProfileResource;
-import com.finio.backend.profiles.interfaces.rest.resources.UpdatePrivacyPermissionsResource;
-import com.finio.backend.profiles.interfaces.rest.resources.UpdateProfileNameResource;
-import com.finio.backend.profiles.interfaces.rest.resources.UpdateProfileResource;
-import com.finio.backend.profiles.interfaces.rest.transform.ProfileResourceFromEntityAssembler;
-import com.finio.backend.profiles.interfaces.rest.transform.UpdatePrivacyPermissionsCommandFromResourceAssembler;
-import com.finio.backend.profiles.interfaces.rest.transform.UpdateProfileCommandFromResourceAssembler;
-import com.finio.backend.profiles.interfaces.rest.transform.UpdateProfileNameCommandFromResourceAssembler;
+import com.finio.backend.profiles.interfaces.rest.resources.*;
+import com.finio.backend.profiles.interfaces.rest.transform.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -87,6 +81,13 @@ public class ProfileController {
     @PutMapping("/change-name/{userId}")
     public ResponseEntity<ProfileResource> updateName(@PathVariable Long userId, @RequestBody UpdateProfileNameResource resource) {
         return profileCommandService.handle(UpdateProfileNameCommandFromResourceAssembler.toCommandFromResource(userId, resource))
+                .map(profile -> ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/saving-percentage/{userId}")
+    public ResponseEntity<ProfileResource> updateSavingPercentage(@PathVariable Long userId, @RequestBody UpdateSavingPercentageResource resource) {
+        return profileCommandService.handle(UpdateSavingPercentageCommandFromResourceAssembler.toCommandFromResource(userId, resource))
                 .map(profile -> ResponseEntity.ok(ProfileResourceFromEntityAssembler.toResourceFromEntity(profile)))
                 .orElse(ResponseEntity.notFound().build());
     }

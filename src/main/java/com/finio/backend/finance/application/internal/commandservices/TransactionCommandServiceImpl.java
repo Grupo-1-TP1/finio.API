@@ -14,9 +14,13 @@ import com.finio.backend.finance.infrastructure.persistence.jpa.AccountRepositor
 import com.finio.backend.finance.infrastructure.persistence.jpa.CategoryRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.SavingGoalRepository;
 import com.finio.backend.finance.infrastructure.persistence.jpa.TransactionRepository;
+import com.finio.backend.profiles.domain.model.aggregates.Profile;
+import com.finio.backend.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
@@ -26,17 +30,20 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
     private final SavingGoalRepository savingGoalRepository;
+    private final ProfileRepository profileRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public TransactionCommandServiceImpl(TransactionRepository transactionRepository,
                                          AccountRepository accountRepository,
                                          CategoryRepository categoryRepository,
                                          ApplicationEventPublisher eventPublisher,
-                                         SavingGoalRepository savingGoalRepository) {
+                                         SavingGoalRepository savingGoalRepository,
+                                         ProfileRepository profileRepository) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.categoryRepository = categoryRepository;
         this.savingGoalRepository = savingGoalRepository;
+        this.profileRepository = profileRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -62,14 +69,28 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
             }
         }
 
+        BigDecimal savingPercentage = profileRepository.findByUserId(account.getUserId())
+                .map(Profile::getSaving_percentage)
+                .orElse(BigDecimal.ZERO);
+
         if (command.type() == TransactionType.EXPENSE) {
             account.setBalance(account.getBalance().subtract(command.amount()));
+
+            if (account.getSavingsFund() == null) {
+                account.setSavingsFund(BigDecimal.ZERO);
+            }
+            account.setSavingPercentage(savingPercentage);
+            account.setAvailableBalance(account.getBalance().subtract(account.getSavingsFund()));
+
             if (savingGoal != null) {
                 savingGoal.setCurrentAmount(savingGoal.getCurrentAmount().add(command.amount()));
                 savingGoalRepository.save(savingGoal);
             }
+
         } else if (command.type() == TransactionType.INCOME) {
             account.setBalance(account.getBalance().add(command.amount()));
+
+            account.updateSavingsMetrics(savingPercentage, account.getBalance());
         }
         accountRepository.save(account);
 
@@ -118,13 +139,20 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
         }
 
         try {
-            // Regla de negocio: Al eliminar una transacción, revertimos el saldo de la cuenta antes de borrarla
             var transaction = transactionOptional.get();
             var account = transaction.getAccount();
+            BigDecimal savingPercentage = profileRepository.findByUserId(account.getUserId())
+                    .map(Profile::getSaving_percentage)
+                    .orElse(BigDecimal.ZERO);
+
             if (transaction.getType() == TransactionType.EXPENSE) {
                 account.setBalance(account.getBalance().add(transaction.getAmount()));
+                account.setAvailableBalance(account.getBalance().subtract(
+                        account.getSavingsFund() != null ? account.getSavingsFund() : BigDecimal.ZERO
+                ));
             } else {
                 account.setBalance(account.getBalance().subtract(transaction.getAmount()));
+                account.updateSavingsMetrics(savingPercentage, account.getBalance());
             }
             accountRepository.save(account);
 

@@ -1,23 +1,30 @@
 package com.finio.backend.profiles.application.internal.commandservices;
 
+import com.finio.backend.finance.domain.model.aggregates.Account;
+import com.finio.backend.finance.infrastructure.persistence.jpa.AccountRepository;
 import com.finio.backend.profiles.domain.model.commands.*;
 import com.finio.backend.profiles.domain.model.aggregates.Profile;
 import com.finio.backend.profiles.domain.services.ProfileCommandService;
 import com.finio.backend.profiles.infrastructure.persistence.jpa.repositories.ProfileRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class ProfileCommandServiceImpl implements ProfileCommandService {
 
     private final ProfileRepository profileRepository;
+    private final AccountRepository accountRepository;
 
-    public ProfileCommandServiceImpl(ProfileRepository profileRepository) {
+    public ProfileCommandServiceImpl(ProfileRepository profileRepository, AccountRepository accountRepository) {
         this.profileRepository = profileRepository;
+        this.accountRepository = accountRepository;
     }
 
     @Override
+    @Transactional
     public Optional<Profile> handle(CreateProfileCommand command) {
         if (profileRepository.findByUserId(command.user_id()).isPresent()) {
             throw new IllegalArgumentException("Profile already exists for this user");
@@ -28,6 +35,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     }
 
     @Override
+    @Transactional
     public Optional<Profile> handle(UpdateProfileCommand command) {
         Profile profile = profileRepository.findByUserId(command.userId())
                 .orElseThrow(() -> new IllegalArgumentException("Profile not found"));
@@ -37,7 +45,16 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         profile.setAllow_ml_analysis(command.allow_ml_analysis());
         profile.setAllow_push_notifications(command.allow_push_notifications());
         profile.setUse_biometrics(command.use_biometrics());
-        return Optional.of(profileRepository.save(profile));
+
+        Profile savedProfile = profileRepository.save(profile);
+
+        List<Account> accounts = accountRepository.findByUserId(command.userId());
+        for (Account account : accounts) {
+            account.updateSavingsMetrics(savedProfile.getSaving_percentage(), account.getBalance());
+            accountRepository.save(account);
+        }
+
+        return Optional.of(savedProfile);
     }
 
     @Override
@@ -63,6 +80,25 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
         profile.setName(command.name());
 
         return Optional.of(profileRepository.save(profile));
+    }
+
+    @Override
+    @Transactional
+    public Optional<Profile> handle(UpdateSavingPercentageCommand command) {
+        Profile profile = profileRepository.findByUserId(command.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Profile not found for user ID: " + command.userId()));
+
+        profile.setSaving_percentage(command.percentage());
+
+        Profile savedProfile = profileRepository.save(profile);
+
+        List<Account> accounts = accountRepository.findByUserId(command.userId());
+        for (Account account : accounts) {
+            account.updateSavingsMetrics(savedProfile.getSaving_percentage(), account.getBalance());
+            accountRepository.save(account);
+        }
+
+        return Optional.of(savedProfile);
     }
 
     @Override
