@@ -30,13 +30,13 @@ public class Profile extends AuditableAbstractAggregateRoot<Profile> {
     @Column(precision = 10, scale = 2)
     private BigDecimal saving_percentage;
 
-    @Column(name = "allow_ml_analysis", unique = true)
+    @Column(name = "allow_ml_analysis")
     private Boolean allow_ml_analysis;
 
-    @Column(name = "allow_push_notifications", unique = true)
+    @Column(name = "allow_push_notifications")
     private Boolean allow_push_notifications;
 
-    @Column(name = "use_biometrics", unique = true)
+    @Column(name = "use_biometrics")
     private Boolean use_biometrics;
 
     public Profile() {}

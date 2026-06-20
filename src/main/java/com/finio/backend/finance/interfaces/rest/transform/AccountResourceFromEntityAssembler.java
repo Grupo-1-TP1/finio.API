@@ -16,9 +16,9 @@ public class AccountResourceFromEntityAssembler {
                 entity.getUserId(),
                 entity.getName(),
                 entity.getBalance(),
-                entity.getBalance(),
-                BigDecimal.ZERO,
-                BigDecimal.ZERO
+                entity.getAvailableBalance() != null ? entity.getAvailableBalance() : entity.getBalance(),
+                entity.getSavingsFund() != null ? entity.getSavingsFund() : BigDecimal.ZERO,
+                entity.getSavingPercentage() != null ? entity.getSavingPercentage() : BigDecimal.ZERO
         );
     }
 
@@ -27,15 +27,17 @@ public class AccountResourceFromEntityAssembler {
             throw new IllegalArgumentException("Entity cannot be null");
         }
 
-        BigDecimal percentage = (savingPercentage != null) ? savingPercentage : BigDecimal.valueOf(0.0);
+        BigDecimal percentage = (entity.getSavingPercentage() != null && entity.getSavingPercentage().compareTo(BigDecimal.ZERO) > 0)
+                ? entity.getSavingPercentage()
+                : ((savingPercentage != null) ? savingPercentage : BigDecimal.ZERO);
 
         return new AccountResource(
                 entity.getAccountId(),
                 entity.getUserId(),
                 entity.getName(),
                 entity.getBalance(),
-                entity.getAvailableBalance(percentage),
-                entity.calculateSavingsFund(percentage),
+                entity.getAvailableBalance() != null ? entity.getAvailableBalance() : entity.getBalance(),
+                entity.getSavingsFund() != null ? entity.getSavingsFund() : BigDecimal.ZERO,
                 percentage
         );
     }
