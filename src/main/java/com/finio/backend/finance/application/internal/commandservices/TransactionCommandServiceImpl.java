@@ -125,8 +125,37 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
         transaction.setCategory(categoryRepository.findById(command.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("Category not found")));
 
+        var account = transaction.getAccount();
+
+        // 1. Calcular la diferencia (monto nuevo - monto anterior) ANTES de modificar la entidad
+        BigDecimal delta = command.amount().subtract(transaction.getAmount());
+
+        // 2. Actualizar los datos descriptivos y de monto de la transacción
         transaction.setAmount(command.amount());
         transaction.setDescription(command.description());
+
+        BigDecimal savingPercentage = profileRepository.findByUserId(account.getUserId())
+                .map(Profile::getSaving_percentage)
+                .orElse(BigDecimal.ZERO);
+
+        // 3. Aplicar el reajuste del delta sobre el balance general
+        if (transaction.getType() == TransactionType.EXPENSE) {
+            // Si el gasto aumenta (delta positivo), el balance de la cuenta disminuye
+            account.setBalance(account.getBalance().subtract(delta));
+
+            account.setAvailableBalance(account.getBalance().subtract(
+                    account.getSavingsFund() != null ? account.getSavingsFund() : BigDecimal.ZERO
+            ));
+        } else if (transaction.getType() == TransactionType.INCOME) {
+            // Si el ingreso aumenta (delta positivo), el balance de la cuenta aumenta
+            account.setBalance(account.getBalance().add(delta));
+
+            // Recalcular el fondo de ahorro e indirectamente el disponible basado en el nuevo balance
+            account.updateSavingsMetrics(savingPercentage, account.getBalance());
+        }
+
+        accountRepository.save(account);
+
         return Optional.of(transactionRepository.save(transaction));
     }
 
