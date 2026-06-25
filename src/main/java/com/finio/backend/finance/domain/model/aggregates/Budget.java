@@ -56,7 +56,7 @@ public class Budget extends AuditableAbstractAggregateRoot<Budget> {
         this.category = category;
         this.amount = command.amount();
         this.spent = BigDecimal.ZERO;
-        this.date = LocalDate.now();
+        this.date = command.date();
         this.month = date.getMonthValue();
         this.year = date.getYear();
     }
