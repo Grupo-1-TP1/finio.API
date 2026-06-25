@@ -3,6 +3,7 @@ package com.finio.backend.finance.application.internal.queryservices;
 import com.finio.backend.finance.domain.model.aggregates.Budget;
 import com.finio.backend.finance.domain.model.queries.GetBudgetByIdQuery;
 import com.finio.backend.finance.domain.model.queries.GetBudgetByUserIdAndCategoryIdAndMonthAndYear;
+import com.finio.backend.finance.domain.model.queries.GetBudgetsByUserIdAndMonthAndYear;
 import com.finio.backend.finance.domain.model.queries.GetBudgetsByUserIdQuery;
 import com.finio.backend.finance.domain.services.BudgetQueryService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.BudgetRepository;
@@ -31,4 +32,9 @@ public class BudgetQueryServiceImpl implements BudgetQueryService {
 
     @Override
     public Optional<Budget> handle(GetBudgetByUserIdAndCategoryIdAndMonthAndYear query) { return budgetRepository.findByUserIdAndCategory_CategoryIdAndMonthAndYear(query.userId(), query.categoryId(), query.month(), query.year()); }
+
+    @Override
+    public List<Budget> handle(GetBudgetsByUserIdAndMonthAndYear query) {
+        return budgetRepository.findByUserIdAndMonthAndYear(query.userId(), query.month(), query.year());
+    }
 }
