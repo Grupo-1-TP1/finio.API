@@ -36,7 +36,7 @@ public class OpenAiGatewayImpl implements AiClientGateway {
 
         List<Map<String, String>> messages = new ArrayList<>();
 
-        // 🤖 1. SYSTEM PROMPT DEFINITIVO (Rol de auditor analítico)
+        // 1. SYSTEM PROMPT DEFINITIVO (Rol de auditor analítico)
         String systemPrompt = """
                 Eres FinioBot, el asesor financiero inteligente integrado en la aplicación móvil 'Finio'. 
                 Tu objetivo es ayudar a usuarios universitarios y jóvenes profesionales a resolver dudas sobre su dinero basándote ESTRICTAMENTE en sus datos reales.
@@ -52,7 +52,7 @@ public class OpenAiGatewayImpl implements AiClientGateway {
 
         messages.add(Map.of("role", "system", "content", systemPrompt));
 
-        // 📊 2. INYECCIÓN DEL HISTORIAL TRANSACCIONAL Y ESTADO REAL DEL USUARIO
+        // 2. INYECCIÓN DEL HISTORIAL TRANSACCIONAL Y ESTADO REAL DEL USUARIO
         LocalDate today = LocalDate.now();
         String fechaActual = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
         BigDecimal capacidadAhorroReal = snapshot.totalIncomeThisMonth().subtract(snapshot.totalExpenseThisMonth());
@@ -86,7 +86,7 @@ public class OpenAiGatewayImpl implements AiClientGateway {
 
         messages.add(Map.of("role", "system", "content", realContext.toString()));
 
-        // 🔄 3. ACOPLAMIENTO DE LA CONVERSACIÓN ACTIVA (Chat de la UI)
+        // 3. ACOPLAMIENTO DE LA CONVERSACIÓN ACTIVA (Chat de la UI)
         for (ChatMessage msg : conversationHistory) {
             messages.add(Map.of("role", msg.getRole(), "content", msg.getContent()));
         }
@@ -94,7 +94,7 @@ public class OpenAiGatewayImpl implements AiClientGateway {
         Map<String, Object> body = Map.of(
                 "model", "gpt-4o-mini",
                 "messages", messages,
-                "temperature", 0.3, // Temperatura baja obligatoria para garantizar rigor matemático y cero alucinaciones
+                "temperature", 0.3,
                 "max_tokens", 450
         );
 
