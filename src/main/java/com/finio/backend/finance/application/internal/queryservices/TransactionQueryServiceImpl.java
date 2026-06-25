@@ -2,6 +2,7 @@ package com.finio.backend.finance.application.internal.queryservices;
 
 import com.finio.backend.finance.domain.model.aggregates.Transaction;
 import com.finio.backend.finance.domain.model.queries.GetTransactionsBySavingGoalIdQuery;
+import com.finio.backend.finance.domain.model.queries.GetTransactionsByUserIdAndMonthAndYear;
 import com.finio.backend.finance.domain.model.queries.GetTransactionsByUserIdQuery;
 import com.finio.backend.finance.domain.services.TransactionQueryService;
 import com.finio.backend.finance.infrastructure.persistence.jpa.TransactionRepository;
@@ -25,5 +26,10 @@ public class TransactionQueryServiceImpl implements TransactionQueryService {
     @Override
     public List<Transaction> handle(GetTransactionsBySavingGoalIdQuery query) {
         return transactionRepository.findBySavingGoal_SavingGoalId(query.savingGoalId());
+    }
+
+    @Override
+    public List<Transaction> handle(GetTransactionsByUserIdAndMonthAndYear query) {
+        return transactionRepository.findByUserIdAndMonthAndYear(query.userId(), query.month(), query.year());
     }
 }

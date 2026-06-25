@@ -1,6 +1,7 @@
 package com.finio.backend.finance.interfaces.rest;
 
 import com.finio.backend.finance.domain.model.queries.GetBudgetByIdQuery;
+import com.finio.backend.finance.domain.model.queries.GetBudgetsByUserIdAndMonthAndYear;
 import com.finio.backend.finance.domain.model.queries.GetBudgetsByUserIdQuery;
 import com.finio.backend.finance.domain.services.BudgetCommandService;
 import com.finio.backend.finance.domain.services.BudgetQueryService;
@@ -59,6 +60,17 @@ public class BudgetController {
                 .map(BudgetResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
 
+        return ResponseEntity.ok(resources);
+    }
+
+    @GetMapping("/user/{userId}/date")
+    public ResponseEntity<List<BudgetResource>> getBudgetsByUserIdAndMonthAndYear(@PathVariable Long userId, @RequestParam Integer month, @RequestParam Integer year) {
+        var query = new GetBudgetsByUserIdAndMonthAndYear(userId, month, year);
+        var budgets = budgetQueryService.handle(query);
+
+        var resources = budgets.stream()
+                .map(BudgetResourceFromEntityAssembler::toResourceFromEntity)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(resources);
     }
 

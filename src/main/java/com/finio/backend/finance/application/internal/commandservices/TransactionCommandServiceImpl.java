@@ -51,53 +51,60 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
     @Transactional
     public Optional<Transaction> handle(CreateTransactionCommand command) {
 
+        // 1. CONTROL DE INTEGRIDAD: Validación de la existencia de la cuenta y la categoría
         Optional<Account> accountOptional = accountRepository.findById(command.accountId());
         Optional<Category> categoryOptional = categoryRepository.findById(command.categoryId());
 
         if (accountOptional.isEmpty() || categoryOptional.isEmpty()) {
-            return Optional.empty();
+            return Optional.empty(); // Aborta el flujo si faltan llaves foráneas válidas
         }
 
         Account account = accountOptional.get();
         Category category = categoryOptional.get();
         SavingGoal savingGoal = null;
 
-        if (command.savingGoalId() != null) {
-            Optional<SavingGoal> savingGoalOptional = savingGoalRepository.findById(command.savingGoalId());
-            if (savingGoalOptional.isPresent()) {
-                savingGoal = savingGoalOptional.get();
-            }
-        }
-
+        // 2. EXTRACCIÓN DE ENTORNO: Obtención de la tasa de ahorro preconfigurada en el perfil
         BigDecimal savingPercentage = profileRepository.findByUserId(account.getUserId())
                 .map(Profile::getSaving_percentage)
                 .orElse(BigDecimal.ZERO);
 
+        // 3. LÓGICA DE NEGOCIO SECTORIAL: Evaluación según el tipo de movimiento
         if (command.type() == TransactionType.EXPENSE) {
+            // Regla aritmética: Los gastos disminuyen el balance general de la cuenta
             account.setBalance(account.getBalance().subtract(command.amount()));
 
+            // Inicialización preventiva del fondo de ahorro local
             if (account.getSavingsFund() == null) {
                 account.setSavingsFund(BigDecimal.ZERO);
             }
             account.setSavingPercentage(savingPercentage);
+
+            // Aislamiento: El saldo disponible es el balance total menos el fondo protegido
             account.setAvailableBalance(account.getBalance().subtract(account.getSavingsFund()));
 
+            // Actualización del progreso si el gasto está asociado a una meta material específica
             if (savingGoal != null) {
                 savingGoal.setCurrentAmount(savingGoal.getCurrentAmount().add(command.amount()));
                 savingGoalRepository.save(savingGoal);
             }
 
         } else if (command.type() == TransactionType.INCOME) {
+            // Regla aritmética: Los ingresos aumentan el balance general de la cuenta
             account.setBalance(account.getBalance().add(command.amount()));
 
+            // Recálculo automático de métricas de ahorro basado en la nueva liquidez
             account.updateSavingsMetrics(savingPercentage, account.getBalance());
         }
+
+        // Persistencia del estado actualizado de los balances en la cuenta
         accountRepository.save(account);
 
+        // 4. PERSISTENCIA Y ARQUITECTURA DIRIGIDA POR EVENTOS
         Transaction transaction = new Transaction(command, account, category, savingGoal);
         try {
             Transaction savedTransaction = transactionRepository.save(transaction);
 
+            // GATILLO DE NOTIFICACIÓN: Si es un gasto, se publica el evento para evaluar alertas push
             if (savedTransaction.getType() == TransactionType.EXPENSE) {
                 var event = new TransactionCreatedEvent(
                         account.getUserId(),
@@ -107,12 +114,13 @@ public class TransactionCommandServiceImpl implements TransactionCommandService 
                         savedTransaction.getDescription(),
                         savedTransaction.getTransactionDate()
                 );
+                // Envío asíncrono hacia el módulo encargado de verificar el umbral del presupuesto
                 eventPublisher.publishEvent(event);
             }
 
             return Optional.of(savedTransaction);
         } catch (Exception e) {
-            return Optional.empty();
+            return Optional.empty(); // Captura excepciones de base de datos de manera segura
         }
     }
 

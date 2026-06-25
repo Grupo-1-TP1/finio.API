@@ -28,14 +28,14 @@ public class TransactionEventHandler {
     public void on(TransactionCreatedEvent event) {
         if (!"EXPENSE".equals(event.type())) return;
 
-        LocalDate today = LocalDate.now();
-        int currentMonth = today.getMonthValue();
-        int currentYear = today.getYear();
+        LocalDate transactionDate = event.transactionDate();
+        int transactionMonth = transactionDate.getMonthValue();
+        int transactionYear = transactionDate.getYear();
         var budgetOptional = budgetRepository.findByUserIdAndCategory_CategoryIdAndMonthAndYear(
                 event.userId(),
                 event.categoryId(),
-                currentMonth,
-                currentYear
+                transactionMonth,
+                transactionYear
         );
 
         budgetOptional.ifPresent(budget -> {

@@ -1,5 +1,6 @@
 package com.finio.backend.finance.interfaces.rest;
 
+import com.finio.backend.finance.domain.model.queries.GetTransactionsByUserIdAndMonthAndYear;
 import com.finio.backend.finance.domain.model.queries.GetTransactionsByUserIdQuery;
 import com.finio.backend.finance.domain.services.TransactionCommandService;
 import com.finio.backend.finance.domain.services.TransactionQueryService;
@@ -70,6 +71,17 @@ public class TransactionController {
                 .map(TransactionResourceFromEntityAssembler::toResourceFromEntity)
                 .collect(Collectors.toList());
 
+        return ResponseEntity.ok(resources);
+    }
+
+    @GetMapping("/user/{userId}/date")
+    public ResponseEntity<List<TransactionResource>> getTransactionsByUserIdAndMonthAndYear(@PathVariable Long userId, @RequestParam Integer month, @RequestParam Integer year) {
+        var query = new GetTransactionsByUserIdAndMonthAndYear(userId, month, year);
+        var transactions = transactionQueryService.handle(query);
+
+        var resources = transactions.stream()
+                .map(TransactionResourceFromEntityAssembler::toResourceFromEntity)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(resources);
     }
 
